@@ -1,0 +1,325 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Autorregistro diario</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,600;1,9..144,600&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#fbf5ef; --paper:#fffdf9; --ink:#3b3140; --muted:#8b7f89; --line:#ecdfd5;
+  --rose:#e9a9a2; --rose-deep:#c46d68; --rose-soft:#fbe9e5;
+  --sage:#a3c4a8; --lav:#c9bce3; --lav-soft:#f0ebf8; --peach:#f6c9a3;
+  --l0:#7fbf95; --l1:#b9d27c; --l2:#f0cd6b; --l3:#f0a061; --l4:#e3735f; --l5:#cf4f63;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;background:var(--bg);color:var(--ink);
+  font-family:"Nunito",system-ui,sans-serif;font-size:16px;line-height:1.5;
+  padding-bottom:110px;
+  background-image:
+    radial-gradient(circle at 8% 4%, #f9dcd5 0, transparent 30%),
+    radial-gradient(circle at 96% 22%, #e4ddf3 0, transparent 28%),
+    radial-gradient(circle at 6% 78%, #e3efe2 0, transparent 26%);
+  background-attachment:fixed;
+}
+.wrap{max-width:640px;margin:0 auto;padding:0 16px}
+
+header{padding:30px 0 6px;display:flex;flex-direction:column;align-items:center;gap:12px}
+.eyebrow{font-size:13px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--rose-deep);background:var(--rose-soft);padding:6px 14px;border-radius:999px}
+header input[type=date]{max-width:190px;text-align:center}
+
+.q{background:var(--paper);border:1px solid var(--line);border-radius:22px;padding:18px 18px 20px;margin:14px 0;
+  box-shadow:0 1px 0 rgba(59,49,64,.04), 0 10px 28px -14px rgba(150,100,90,.25)}
+.q-head{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.q-num{flex:none;width:34px;height:34px;border-radius:12px 12px 12px 4px;display:grid;place-items:center;
+  font-family:"Fraunces",serif;font-weight:600;font-size:17px;color:#fff}
+.q-head h2{margin:0;font-family:"Fraunces",Georgia,serif;font-weight:600;font-size:21px;line-height:1.15;letter-spacing:-.01em}
+.q-head small{display:block;font-family:"Nunito",sans-serif;font-size:13px;font-weight:600;color:var(--muted);margin-top:2px}
+
+input[type=text],input[type=date],textarea{
+  width:100%;font:inherit;font-size:15px;color:var(--ink);background:#fff;
+  border:1.5px solid var(--line);border-radius:14px;padding:10px 13px;outline:none;transition:border-color .2s, box-shadow .2s;
+}
+textarea{resize:none;min-height:52px;overflow:hidden;margin-top:10px}
+input:focus,textarea:focus{border-color:var(--rose);box-shadow:0 0 0 4px var(--rose-soft)}
+::placeholder{color:#c3b6be}
+.other{margin-top:10px}
+
+/* chips */
+.chips{display:flex;flex-wrap:wrap;gap:7px}
+.chip{position:relative;cursor:pointer;user-select:none}
+.chip input{position:absolute;opacity:0;pointer-events:none}
+.chip span{display:inline-block;padding:8px 14px;border-radius:999px;border:1.5px solid var(--line);background:#fff;font-size:14px;font-weight:700;transition:all .15s}
+.chip input:checked + span{background:var(--rose-soft);border-color:var(--rose-deep);color:#8f3f3b}
+.chip input:focus-visible + span{box-shadow:0 0 0 4px var(--rose-soft)}
+
+/* termómetros */
+.thermos{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.thermo{--h:264px;--lv:#efe5de;background:var(--tint);border-radius:20px;padding:16px 10px 16px;display:flex;flex-direction:column;align-items:center}
+.t-title{font-family:"Fraunces",serif;font-weight:600;font-size:18px;margin-bottom:12px}
+.t-body{position:relative;display:grid;grid-template-columns:56px 44px}
+.t-glass{display:flex;flex-direction:column;align-items:center}
+.t-tube{position:relative;width:26px;height:var(--h);border-radius:999px 999px 0 0;background:#fbf6f2;
+  border:3px solid #fff;border-bottom:0;box-shadow:0 0 0 1.5px var(--line), inset 0 2px 6px rgba(120,80,80,.12);overflow:hidden;z-index:1}
+.t-tube::after{content:"";position:absolute;left:4px;top:12px;bottom:6px;width:4px;border-radius:999px;background:rgba(255,255,255,.75)}
+.t-fill{position:absolute;left:0;right:0;bottom:0;height:0;background:var(--lv);
+  transition:height .45s cubic-bezier(.3,1.3,.5,1), background .3s}
+.t-bulb{position:relative;width:54px;height:54px;margin-top:-10px;border-radius:50%;background:var(--lv);
+  border:3px solid #fff;box-shadow:0 0 0 1.5px var(--line), 0 8px 18px -8px rgba(120,80,80,.45);transition:background .3s}
+.t-bulb::after{content:"";position:absolute;left:11px;top:9px;width:12px;height:12px;border-radius:50%;background:rgba(255,255,255,.65)}
+.t-hits{position:absolute;top:0;left:0;right:0;height:var(--h);display:flex;flex-direction:column-reverse}
+.t-hits label{flex:1;display:flex;align-items:center;justify-content:flex-end;cursor:pointer;position:relative;-webkit-tap-highlight-color:transparent}
+.t-hits input{position:absolute;opacity:0;pointer-events:none}
+.t-hits span{display:flex;align-items:center;gap:5px;font-size:12.5px;font-weight:800;color:#b3a5ad;padding:1px 7px 1px 0;border-radius:999px;transition:all .2s}
+.t-hits span::before{content:"";width:8px;height:2px;border-radius:2px;background:#d9c9bf}
+.t-hits label:hover span{color:var(--ink)}
+.t-hits input:checked + span{color:#2e2532;background:var(--lv);padding-left:6px;font-size:14px}
+.t-hits input:checked + span::before{background:#2e2532}
+.t-hits input:focus-visible + span{box-shadow:0 0 0 3px #fff}
+.t-read{margin-top:14px;display:flex;flex-direction:column;align-items:center;gap:6px}
+.t-num{font-family:"Fraunces",serif;font-size:38px;font-weight:600;line-height:1}
+.t-num small{font-size:16px;color:var(--muted)}
+.t-read .lbl{font-size:12px;font-weight:800;padding:4px 10px;border-radius:999px;background:rgba(255,255,255,.75);color:var(--muted);text-align:center}
+.hint{font-size:13px;color:var(--muted);margin:14px 0 0;text-align:center}
+
+/* guardar */
+.savebtn{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);z-index:30;
+  border:0;background:var(--ink);color:#fff;font:inherit;font-weight:800;font-size:16px;padding:15px 30px;border-radius:999px;cursor:pointer;
+  display:inline-flex;align-items:center;justify-content:center;gap:9px;box-shadow:0 14px 34px -12px rgba(59,49,64,.55);transition:transform .15s, background .2s}
+.savebtn:hover{transform:translate(-50%,-2px);background:#2c2430}
+.savebtn:disabled{opacity:.6;cursor:wait;transform:translateX(-50%)}
+.savebtn i{width:9px;height:9px;border-radius:50%;background:var(--rose);display:inline-block}
+
+.toast{position:fixed;left:50%;bottom:92px;transform:translate(-50%,16px);opacity:0;pointer-events:none;z-index:31;
+  max-width:min(440px,calc(100% - 32px));text-align:center;background:var(--ink);color:#fff;font-weight:700;font-size:14.5px;padding:12px 18px;border-radius:16px;transition:all .3s}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+.toast.warn{background:#a8524e}
+
+@media (max-width:480px){
+  .q{padding:16px 14px 18px}
+  .thermos{gap:10px}
+  .thermo{--h:250px}
+  .savebtn{left:16px;right:16px;transform:none}
+  .savebtn:hover,.savebtn:disabled{transform:none}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <span class="eyebrow">Autorregistro diario</span>
+  <input type="date" name="fecha" data-col="Fecha" aria-label="Fecha">
+</header>
+
+<section class="q">
+  <div class="q-head"><div class="q-num" style="background:var(--rose)">1</div><h2>¿Qué pasó?</h2></div>
+  <div class="chips" data-group="momento"></div>
+  <textarea name="contexto" data-col="Qué pasó" placeholder="En una o dos líneas…"></textarea>
+</section>
+
+<section class="q">
+  <div class="q-head"><div class="q-num" style="background:var(--lav)">2</div><h2>¿Qué sentí?<small>Puedes marcar varias. Si no sabes, también vale.</small></h2></div>
+  <div class="chips" data-group="emociones"></div>
+  <input class="other" type="text" name="emociones_otro" placeholder="Otra…">
+</section>
+
+<section class="q">
+  <div class="q-head"><div class="q-num" style="background:var(--l3)">3</div><h2>¿Qué tan fuerte?</h2></div>
+  <div class="thermos">
+    <div class="thermo" style="--tint:var(--rose-soft)" data-scale="emo" data-col="Intensidad emoción (0-10)">
+      <b class="t-title">Emoción</b>
+      <div class="t-body">
+        <div class="t-glass"><div class="t-tube"><div class="t-fill"></div></div><div class="t-bulb"></div></div>
+        <div class="t-hits"></div>
+      </div>
+      <div class="t-read"><span class="t-num">–</span><span class="lbl">Toca un número</span></div>
+    </div>
+    <div class="thermo" style="--tint:var(--lav-soft)" data-scale="sob" data-col="Sobrecarga (0-10)">
+      <b class="t-title">Sobrecarga</b>
+      <div class="t-body">
+        <div class="t-glass"><div class="t-tube"><div class="t-fill"></div></div><div class="t-bulb"></div></div>
+        <div class="t-hits"></div>
+      </div>
+      <div class="t-read"><span class="t-num">–</span><span class="lbl">Toca un número</span></div>
+    </div>
+  </div>
+  <p class="hint">Emoción y sobrecarga pueden ir juntas, pero se miden por separado.</p>
+</section>
+
+<section class="q">
+  <div class="q-head"><div class="q-num" style="background:var(--sage)">4</div><h2>¿Qué noté en mí?</h2></div>
+  <div class="chips" data-group="senales"></div>
+  <input class="other" type="text" name="senales_otro" placeholder="Otra señal…">
+</section>
+
+<section class="q">
+  <div class="q-head"><div class="q-num" style="background:var(--peach)">5</div><h2>¿Cuánto duró?</h2></div>
+  <div class="chips" data-group="duracion"></div>
+</section>
+
+<section class="q">
+  <div class="q-head"><div class="q-num" style="background:var(--rose-deep)">6</div><h2>¿Qué me ayudó o qué necesito?</h2></div>
+  <div class="chips" data-group="ayuda"></div>
+  <textarea name="nota" data-col="Nota" placeholder="Algo más que quiera anotar (opcional)"></textarea>
+</section>
+
+</div>
+
+<button class="savebtn" id="save" type="button"><i></i>Guardar registro</button>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+/* ============================================================
+   CONEXIÓN CON GOOGLE SHEETS
+   Pega aquí la URL de tu Apps Script publicado (termina en /exec)
+   ============================================================ */
+const SHEETS_URL = "";
+
+const GROUPS = {
+  momento:   {col:"Momento", single:true, opts:["Mañana","Tarde","Noche"]},
+  emociones: {col:"Emociones", opts:["Calma","Alegría","Entusiasmo","Ansiedad","Tristeza","Enojo","Frustración","Miedo","Vergüenza","Saturación","No sé cómo llamarlo"]},
+  senales:   {col:"Señales", opts:["Respiración agitada","Corazón acelerado","Tensión en mandíbula/cuello","Estómago","Calor o frío","Cansancio repentino","Dolor de cabeza","Sensible al ruido/luz","Molestia con el contacto","Pensamiento repetitivo","Bloqueo mental","Irritabilidad","Dificultad para hablar","Ganas de moverme","Ganas de aislarme/escapar"]},
+  duracion:  {col:"Duración", single:true, opts:["Segundos","Minutos","Menos de 1 hora","Varias horas","Todo el día"]},
+  ayuda:     {col:"Qué ayudó / necesito", opts:["Respirar","Hacer una pausa","Silencio / menos estímulos","Moverme","Hablar con alguien","Estar a solas","Comer o tomar agua","Descansar / dormir","Nada todavía"]}
+};
+const LEVEL = v => v<=2?["Bajo","var(--l0)"]:v<=4?["Señal temprana","var(--l1)"]:v<=6?["Moderado","var(--l2)"]:v<=8?["Alto","var(--l3)"]:v===9?["Cerca del límite","var(--l4)"]:["Límite","var(--l5)"];
+const KEY = "autorregistro-borrador-v3";
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+
+/* ---------- render ---------- */
+$$("[data-group]").forEach(box=>{
+  const key = box.dataset.group, g = GROUPS[key];
+  box.innerHTML = g.opts.map((o,i)=>{
+    const type = g.single ? "radio" : "checkbox";
+    const name = g.single ? key : `${key}_${i}`;
+    return `<label class="chip"><input type="${type}" name="${name}" value="${o}"><span>${o}</span></label>`;
+  }).join("");
+});
+$$("[data-scale]").forEach(box=>{
+  let h = "";
+  for(let v=0; v<=10; v++) h += `<label><input type="radio" name="${box.dataset.scale}" value="${v}" aria-label="${v} de 10"><span>${v}</span></label>`;
+  box.querySelector(".t-hits").innerHTML = h;
+});
+
+/* ---------- UI ---------- */
+function refreshScales(){
+  $$("[data-scale]").forEach(box=>{
+    const c = box.querySelector("input:checked");
+    const fill = box.querySelector(".t-fill"), num = box.querySelector(".t-num"), lbl = box.querySelector(".t-read .lbl");
+    if(!c){
+      box.style.removeProperty("--lv"); fill.style.height = "0";
+      num.textContent = "–"; lbl.textContent = "Toca un número"; lbl.style.background = ""; lbl.style.color = "";
+      return;
+    }
+    const v = +c.value, [t, col] = LEVEL(v);
+    box.style.setProperty("--lv", col);
+    fill.style.height = ((v + 0.5) / 11 * 100) + "%";
+    num.innerHTML = `${v}<small>/10</small>`;
+    lbl.textContent = t; lbl.style.background = col; lbl.style.color = "#2e2532";
+  });
+}
+function autosize(el){ el.style.height = "auto"; el.style.height = (el.scrollHeight+2)+"px"; }
+function today(){
+  const d = new Date(); d.setMinutes(d.getMinutes()-d.getTimezoneOffset());
+  return d.toISOString().slice(0,10);
+}
+let toastT;
+function toast(msg, warn){
+  const t = $("#toast");
+  t.textContent = msg; t.classList.toggle("warn", !!warn); t.classList.add("show");
+  clearTimeout(toastT); toastT = setTimeout(()=>t.classList.remove("show"), 3800);
+}
+
+/* ---------- borrador local ---------- */
+function collectDraft(){
+  const d = {};
+  $$("[name]").forEach(el=>{
+    if(el.type==="checkbox") d[el.name] = el.checked;
+    else if(el.type==="radio"){ if(el.checked) d[el.name] = el.value; }
+    else d[el.name] = el.value;
+  });
+  return d;
+}
+function applyDraft(d){
+  $$("[name]").forEach(el=>{
+    if(!(el.name in d)) return;
+    if(el.type==="checkbox") el.checked = !!d[el.name];
+    else if(el.type==="radio") el.checked = (el.value===d[el.name]);
+    else el.value = d[el.name];
+  });
+}
+let saveT;
+function persist(){
+  clearTimeout(saveT);
+  saveT = setTimeout(()=>{ try{ localStorage.setItem(KEY, JSON.stringify(collectDraft())); }catch(e){} }, 300);
+}
+function loadDraft(){ try{ const s = localStorage.getItem(KEY); return s ? JSON.parse(s) : null; }catch(e){ return null; } }
+
+/* ---------- envío a Google Sheets ---------- */
+function buildPayload(){
+  const out = {};
+  out["Fecha"] = $("[name=fecha]").value;
+  for(const key in GROUPS){
+    const vals = $$(`[data-group="${key}"] input:checked`).map(i=>i.value);
+    const other = $(`[name="${key}_otro"]`);
+    if(other && other.value.trim()) vals.push(other.value.trim());
+    out[GROUPS[key].col] = vals.join(", ");
+  }
+  $$("[data-scale]").forEach(box=>{
+    const c = box.querySelector("input:checked");
+    out[box.dataset.col] = c ? c.value : "";
+  });
+  out["Qué pasó"] = $("[name=contexto]").value.trim();
+  out["Nota"] = $("[name=nota]").value.trim();
+  const hasData = Object.entries(out).some(([k,v]) => k!=="Fecha" && v!=="");
+  return {out, hasData};
+}
+function resetForm(){
+  $$("[name]").forEach(el=>{
+    if(el.type==="checkbox" || el.type==="radio") el.checked = false;
+    else el.value = "";
+  });
+  $("[name=fecha]").value = today();
+  refreshScales();
+  $$("textarea").forEach(autosize);
+  try{ localStorage.removeItem(KEY); }catch(e){}
+}
+async function save(){
+  const {out, hasData} = buildPayload();
+  if(!hasData) return toast("Aún no hay nada para guardar.");
+  if(!SHEETS_URL) return toast("Falta conectar Google Sheets. Tu borrador sigue guardado aquí.", true);
+  const btn = $("#save");
+  btn.disabled = true; btn.lastChild.textContent = "Guardando…";
+  try{
+    const res = await fetch(SHEETS_URL, {method:"POST", headers:{"Content-Type":"text/plain;charset=utf-8"}, body:JSON.stringify(out)});
+    const j = await res.json();
+    if(!j.ok) throw new Error(j.error || "error");
+    resetForm();
+    window.scrollTo({top:0, behavior:"smooth"});
+    toast("Registro guardado ✓");
+  }catch(e){
+    toast("No se pudo guardar. Revisa la conexión e inténtalo de nuevo; tu borrador sigue aquí.", true);
+  }finally{
+    btn.disabled = false; btn.lastChild.textContent = "Guardar registro";
+  }
+}
+
+/* ---------- eventos ---------- */
+document.addEventListener("input", e=>{ if(e.target.tagName==="TEXTAREA") autosize(e.target); persist(); });
+document.addEventListener("change", e=>{ if(e.target.closest("[data-scale]")) refreshScales(); persist(); });
+$("#save").addEventListener("click", save);
+
+/* ---------- inicio ---------- */
+const draft = loadDraft();
+if(draft) applyDraft(draft);
+if(!$("[name=fecha]").value) $("[name=fecha]").value = today();
+refreshScales();
+$$("textarea").forEach(autosize);
+</script>
+</body>
+</html>
