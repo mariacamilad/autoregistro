@@ -105,6 +105,13 @@ input:focus,textarea:focus{border-color:var(--rose);box-shadow:0 0 0 4px var(--r
   .savebtn{left:16px;right:16px;transform:none}
   .savebtn:hover,.savebtn:disabled{transform:none}
 }
+/* Aviso persistente: no simula una confirmación que no podemos leer */
+.delivery-notice{background:var(--paper);border:1.5px solid var(--sage);border-radius:20px;padding:16px 18px;margin:16px 0 10px;box-shadow:0 6px 18px -12px rgba(59,49,64,.2)}
+.delivery-notice[hidden]{display:none}
+.delivery-notice p{margin:0 0 12px;font-size:14px;line-height:1.6}
+.new-record-btn{border:0;border-radius:999px;background:var(--sage);color:var(--ink);padding:11px 17px;font:inherit;font-size:14px;font-weight:800;cursor:pointer}
+.new-record-btn:hover{filter:brightness(.96)}
+
 </style>
 </head>
 <body>
@@ -167,6 +174,11 @@ input:focus,textarea:focus{border-color:var(--rose);box-shadow:0 0 0 4px var(--r
   <textarea name="nota" data-col="Nota" placeholder="Algo más que quiera anotar (opcional)"></textarea>
 </section>
 
+<div id="deliveryNotice" class="delivery-notice" role="status" aria-live="polite" hidden>
+  <p><strong>Solicitud enviada a Google Sheets.</strong> Abre tu hoja «Registro Maria Camila Duarte» y verifica que apareció una fila nueva. Por las restricciones de Google Apps Script, la página no puede confirmar automáticamente el guardado. Tu formulario se conserva para no perder respuestas.</p>
+  <button id="newRecord" class="new-record-btn" type="button">Ya verifiqué: crear nuevo registro</button>
+</div>
+
 </div>
 
 <button class="savebtn" id="save" type="button"><i></i>Guardar registro</button>
@@ -177,7 +189,7 @@ input:focus,textarea:focus{border-color:var(--rose);box-shadow:0 0 0 4px var(--r
    CONEXIÓN CON GOOGLE SHEETS
    Pega aquí la URL de tu Apps Script publicado (termina en /exec)
    ============================================================ */
-const SHEETS_URL = "";
+const SHEETS_URL = "https://script.google.com/macros/s/AKfycbwqxM4murEp01oDu3GWwNJWVpNnM18YvU-_y0I56gxhB1C1h_pm5EtmUmnvGEfuG9JJ6w/exec";
 
 const GROUPS = {
   momento:   {col:"Momento", single:true, opts:["Mañana","Tarde","Noche"]},
@@ -289,25 +301,58 @@ function resetForm(){
   $$("textarea").forEach(autosize);
   try{ localStorage.removeItem(KEY); }catch(e){}
 }
+/* ---------- envío desde GitHub Pages ---------- */
+// Google Apps Script no permite leer de forma fiable una respuesta POST
+// entre dominios desde GitHub Pages. mode:no-cors ENVÍA el formulario,
+// pero no confirma si Google Sheets escribió una fila.
+let sending = false;
+
+function showDeliveryNotice(show){
+  const notice = $("#deliveryNotice");
+  notice.hidden = !show;
+  if(show) notice.scrollIntoView({behavior:"smooth", block:"center"});
+}
+
 async function save(){
+  if(sending) return;
   const {out, hasData} = buildPayload();
   if(!hasData) return toast("Aún no hay nada para guardar.");
-  if(!SHEETS_URL) return toast("Falta conectar Google Sheets. Tu borrador sigue guardado aquí.", true);
+  if(!SHEETS_URL || !SHEETS_URL.endsWith("/exec"))
+    return toast("Falta conectar Google Sheets.", true);
+
   const btn = $("#save");
-  btn.disabled = true; btn.lastChild.textContent = "Guardando…";
+  sending = true;
+  btn.disabled = true;
+  btn.lastChild.textContent = "Enviando…";
+  showDeliveryNotice(false);
   try{
-    const res = await fetch(SHEETS_URL, {method:"POST", headers:{"Content-Type":"text/plain;charset=utf-8"}, body:JSON.stringify(out)});
-    const j = await res.json();
-    if(!j.ok) throw new Error(j.error || "error");
-    resetForm();
-    window.scrollTo({top:0, behavior:"smooth"});
-    toast("Registro guardado ✓");
+    // "text/plain" evita la solicitud de preflight CORS.
+    // La respuesta del servidor es opaca; no se puede afirmar que la fila fue guardada.
+    await fetch(SHEETS_URL, {
+      method:"POST",
+      mode:"no-cors",
+      headers:{"Content-Type":"text/plain;charset=utf-8"},
+      body:JSON.stringify(out)
+    });
+    // Conservamos el borrador hasta que la persona confirme la fila en Sheets.
+    showDeliveryNotice(true);
+    toast("Solicitud enviada. Confirma el registro en Google Sheets.");
   }catch(e){
-    toast("No se pudo guardar. Revisa la conexión e inténtalo de nuevo; tu borrador sigue aquí.", true);
+    console.error("Error al enviar el registro:", e);
+    toast("No se pudo enviar. Tu borrador sigue guardado; inténtalo de nuevo.", true);
   }finally{
-    btn.disabled = false; btn.lastChild.textContent = "Guardar registro";
+    sending = false;
+    btn.disabled = false;
+    btn.lastChild.textContent = "Guardar registro";
   }
 }
+
+$("#newRecord").addEventListener("click", () => {
+  resetForm();
+  showDeliveryNotice(false);
+  window.scrollTo({top:0, behavior:"smooth"});
+  toast("Formulario listo para un nuevo registro.");
+});
 
 /* ---------- eventos ---------- */
 document.addEventListener("input", e=>{ if(e.target.tagName==="TEXTAREA") autosize(e.target); persist(); });
